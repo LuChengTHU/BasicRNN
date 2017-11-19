@@ -65,7 +65,7 @@ class RNN(object):
 
         
         cell = BasicLSTMCell(num_units)
-        cell_dr = tf.contrib.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0, output_keep_prob=0.5)
+        cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=0.3, output_keep_prob=0.3)
         outputs, states = dynamic_rnn(cell_dr, self.embed_input, self.texts_length, dtype=tf.float32, scope="rnn")
 
 
