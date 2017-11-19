@@ -13,7 +13,7 @@ tf.app.flags.DEFINE_boolean("is_train", True, "Set to False to inference.")
 tf.app.flags.DEFINE_boolean("read_graph", False, "Set to False to build graph.")
 tf.app.flags.DEFINE_integer("symbols", 18430, "vocabulary size.")
 tf.app.flags.DEFINE_integer("labels", 5, "Number of labels.")
-tf.app.flags.DEFINE_integer("epoch", 10, "Number of epoch.")
+tf.app.flags.DEFINE_integer("epoch", 40, "Number of epoch.")
 tf.app.flags.DEFINE_integer("embed_units", 300, "Size of word embedding.")
 tf.app.flags.DEFINE_integer("units", 512, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("layers", 1, "Number of layers in the model.")
@@ -91,7 +91,7 @@ def train(model, sess, dataset):
     while ed < len(dataset):
         st, ed = ed, ed+FLAGS.batch_size if ed+FLAGS.batch_size < len(dataset) else len(dataset)
         batch_data = gen_batch_data(dataset[st:ed])
-        outputs = model.train_step(sess, batch_data, summary=gen_summary)
+        outputs = model.train_step(sess, batch_data, FLAGS.keep_prob, summary=gen_summary)
         if gen_summary: 
             summary = outputs[-1]
             gen_summary = False
@@ -106,7 +106,8 @@ def evaluate(model, sess, dataset):
     while ed < len(dataset):
         st, ed = ed, ed+FLAGS.batch_size if ed+FLAGS.batch_size < len(dataset) else len(dataset)
         batch_data = gen_batch_data(dataset[st:ed])
-        outputs = sess.run(['loss:0', 'accuracy:0'], {model.texts:batch_data['texts'], model.texts_length:batch_data['texts_length'], model.labels:batch_data['labels']})
+        outputs = sess.run(['loss:0', 'accuracy:0'], {model.texts:batch_data['texts'], model.texts_length:batch_data['texts_length'],
+                                                      model.labels:batch_data['labels'], model.keep_prob:1.0})
         loss += outputs[0]
         accuracy += outputs[1]
     return loss / len(dataset), accuracy / len(dataset)
@@ -117,7 +118,8 @@ def inference(model, sess, dataset):
     while ed < len(dataset):
         st, ed = ed, ed+FLAGS.batch_size if ed+FLAGS.batch_size < len(dataset) else len(dataset)
         batch_data = gen_batch_data(dataset[st:ed])
-        outputs = sess.run(['predict_labels:0'], {model.texts:batch_data['texts'], model.texts_length:batch_data['texts_length']})
+        outputs = sess.run(['predict_labels:0'], {model.texts:batch_data['texts'], model.texts_length:batch_data['texts_length'],
+                                                  model.keep_prob:1.0})
         result += outputs[0].tolist()
 
     with open('result.txt', 'w') as f:
@@ -142,8 +144,7 @@ with tf.Session(config=config) as sess:
                 FLAGS.labels,
                 embed,
                 learning_rate=0.001,
-                model=FLAGS.model,
-                keep_prob=FLAGS.keep_prob)
+                model=FLAGS.model)
         if FLAGS.log_parameters:
             model.print_parameters()
         

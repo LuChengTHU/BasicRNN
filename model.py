@@ -31,12 +31,13 @@ class RNN(object):
             embed,
             learning_rate=0.5,
             max_gradient_norm=5.0,
-            keep_prob=1.0,
             model='LSTM'):
         #todo: implement placeholders
         self.texts = tf.placeholder(dtype=tf.string, shape=[None, None])  # shape: batch*len
         self.texts_length = tf.placeholder(dtype=tf.int32, shape=None)  # shape: batch
         self.labels = tf.placeholder(dtype=tf.int64, shape=None)  # shape: batch
+
+        self.keep_prob = tf.placeholder(dtype=tf.float32)
 
         self.symbol2index = MutableHashTable(
                 key_dtype=tf.string,
@@ -65,6 +66,8 @@ class RNN(object):
 
         self.embed_input = tf.nn.embedding_lookup(self.embed, self.index_input) #batch*len*embed_unit
 
+        #todo: implement unfinished networks
+
         if num_layers == 1:
             if model == 'LSTM':
                 cell = BasicLSTMCell(num_units)
@@ -75,10 +78,7 @@ class RNN(object):
             else:
                 print("Wrong model!")
                 return
-            if keep_prob < 1.0:
-                cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0, output_keep_prob=keep_prob)
-            else:
-                cell_dr = cell
+            cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0, output_keep_prob=self.keep_prob)
             outputs, states = dynamic_rnn(cell_dr, self.embed_input, self.texts_length, dtype=tf.float32, scope="rnn")
             if model == 'LSTM':
                 h_state = states[0]
@@ -94,17 +94,12 @@ class RNN(object):
             else:
                 print("Wrong model!")
                 return
-            if keep_prob < 1.0:
-                cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0, output_keep_prob=keep_prob)
-            else:
-                cell_dr = cell
+            cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0, output_keep_prob=self.keep_prob)
             multi_cell = tf.contrib.rnn.MultiRNNCell([cell_dr] * num_layers, state_is_tuple=True)
             outputs, state = tf.nn.dynamic_rnn(multi_cell, self.embed_input, self.texts_length, dtype=tf.float32,
                                                scope="rnn", time_major=False)
             h_state = outputs[:, -1, :]
 
-
-        #todo: implement unfinished networks
 
         logits = tf.layers.dense(h_state, num_labels)
 
@@ -117,7 +112,7 @@ class RNN(object):
         self.params = tf.trainable_variables()
             
         # calculate the gradient of parameters
-        opt = tf.train.AdamOptimizer(self.learning_rate)
+        opt = tf.train.GradientDescentOptimizer(self.learning_rate)
         gradients = tf.gradients(mean_loss, self.params)
         clipped_gradients, self.gradient_norm = tf.clip_by_global_norm(gradients, max_gradient_norm)
         self.update = opt.apply_gradients(zip(clipped_gradients, self.params), global_step=self.global_step)
@@ -135,10 +130,11 @@ class RNN(object):
         for item in self.params:
             print('%s: %s' % (item.name, item.get_shape()))
     
-    def train_step(self, session, data, summary=False):
+    def train_step(self, session, data, keep_prob, summary=False):
         input_feed = {self.texts: data['texts'],
                 self.texts_length: data['texts_length'],
-                self.labels: data['labels']}
+                self.labels: data['labels'],
+                self.keep_prob: keep_prob}
         output_feed = [self.loss, self.accuracy, self.gradient_norm, self.update]
         if summary:
             output_feed.append(self.merged_summary_op)
