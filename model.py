@@ -76,7 +76,10 @@ class RNN(object):
                 return
             cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0, output_keep_prob=0.5)
             outputs, states = dynamic_rnn(cell_dr, self.embed_input, self.texts_length, dtype=tf.float32, scope="rnn")
-            h_state = states[0]
+            if model == 'LSTM':
+                h_state = states[0]
+            else:
+                h_state = states
         else:
             if model == 'LSTM':
                 cell = BasicLSTMCell(num_units)
