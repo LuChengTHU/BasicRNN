@@ -31,6 +31,7 @@ class RNN(object):
             embed,
             learning_rate=0.5,
             max_gradient_norm=5.0,
+            keep_prob=1.0,
             model='LSTM'):
         #todo: implement placeholders
         self.texts = tf.placeholder(dtype=tf.string, shape=[None, None])  # shape: batch*len
@@ -74,7 +75,10 @@ class RNN(object):
             else:
                 print("Wrong model!")
                 return
-            cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0, output_keep_prob=0.5)
+            if keep_prob < 1.0:
+                cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0, output_keep_prob=keep_prob)
+            else:
+                cell_dr = cell
             outputs, states = dynamic_rnn(cell_dr, self.embed_input, self.texts_length, dtype=tf.float32, scope="rnn")
             if model == 'LSTM':
                 h_state = states[0]
@@ -90,13 +94,13 @@ class RNN(object):
             else:
                 print("Wrong model!")
                 return
-            cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0, output_keep_prob=0.5)
+            if keep_prob < 1.0:
+                cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0, output_keep_prob=keep_prob)
+            else:
+                cell_dr = cell
             multi_cell = tf.contrib.rnn.MultiRNNCell([cell_dr] * num_layers, state_is_tuple=True)
-            # init_state = multi_cell.zero_state(, dtype=tf.float32)
             outputs, state = tf.nn.dynamic_rnn(multi_cell, self.embed_input, self.texts_length, dtype=tf.float32,
-                                               scope="rnn",
-                                               # initial_state=init_state,
-                                               time_major=False)
+                                               scope="rnn", time_major=False)
             h_state = outputs[:, -1, :]
 
 

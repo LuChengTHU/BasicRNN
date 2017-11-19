@@ -23,6 +23,7 @@ tf.app.flags.DEFINE_string("train_dir", "./train/LSTM", "Training directory.")
 tf.app.flags.DEFINE_boolean("log_parameters", True, "Set to True to show the parameters")
 
 tf.app.flags.DEFINE_string("model", "LSTM", "Set the RNN model")
+tf.app.flags.DEFINE_float("keep_prob", 1.0, "Dropout keep prob")
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -141,7 +142,8 @@ with tf.Session(config=config) as sess:
                 FLAGS.labels,
                 embed,
                 learning_rate=0.001,
-                model=FLAGS.model)
+                model=FLAGS.model,
+                keep_prob=FLAGS.keep_prob)
         if FLAGS.log_parameters:
             model.print_parameters()
         
