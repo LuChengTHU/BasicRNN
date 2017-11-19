@@ -97,7 +97,7 @@ class RNN(object):
                                                scope="rnn",
                                                # initial_state=init_state,
                                                time_major=False)
-            h_state = state[-1][1]
+            h_state = outputs[:, -1, :]
 
 
         #todo: implement unfinished networks
