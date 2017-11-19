@@ -20,6 +20,7 @@ def bias_variable(shape):  # you can use this func to build new variables
     initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial)
 
+
 class RNN(object):
     def __init__(self,
             num_symbols,
@@ -29,7 +30,8 @@ class RNN(object):
             num_labels,
             embed,
             learning_rate=0.5,
-            max_gradient_norm=5.0):
+            max_gradient_norm=5.0,
+            model='LSTM'):
         #todo: implement placeholders
         self.texts = tf.placeholder(dtype=tf.string, shape=[None, None])  # shape: batch*len
         self.texts_length = tf.placeholder(dtype=tf.int32, shape=None)  # shape: batch
@@ -59,19 +61,45 @@ class RNN(object):
         else:
             # initialize the embedding by pre-trained word vectors
             self.embed = tf.get_variable('embed', dtype=tf.float32, initializer=embed)
-        
-        
+
         self.embed_input = tf.nn.embedding_lookup(self.embed, self.index_input) #batch*len*embed_unit
 
-        
-        cell = BasicLSTMCell(num_units)
-        cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=0.3, output_keep_prob=0.3)
-        outputs, states = dynamic_rnn(cell_dr, self.embed_input, self.texts_length, dtype=tf.float32, scope="rnn")
+        if num_layers == 1:
+            if model == 'LSTM':
+                cell = BasicLSTMCell(num_units)
+            elif model == 'RNN':
+                cell = BasicRNNCell(num_units)
+            elif model == 'GRU':
+                cell = GRUCell(num_units)
+            else:
+                print("Wrong model!")
+                return
+            cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0, output_keep_prob=0.5)
+            outputs, states = dynamic_rnn(cell_dr, self.embed_input, self.texts_length, dtype=tf.float32, scope="rnn")
+            h_state = states[0]
+        else:
+            if model == 'LSTM':
+                cell = BasicLSTMCell(num_units)
+            elif model == 'RNN':
+                cell = BasicRNNCell(num_units)
+            elif model == 'GRU':
+                cell = GRUCell(num_units)
+            else:
+                print("Wrong model!")
+                return
+            cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0, output_keep_prob=0.5)
+            multi_cell = tf.contrib.rnn.MultiRNNCell([cell_dr] * num_layers, state_is_tuple=True)
+            # init_state = multi_cell.zero_state(, dtype=tf.float32)
+            outputs, state = tf.nn.dynamic_rnn(multi_cell, self.embed_input, self.texts_length, dtype=tf.float32,
+                                               scope="rnn",
+                                               # initial_state=init_state,
+                                               time_major=False)
+            h_state = state[-1][1]
 
 
         #todo: implement unfinished networks
 
-        logits = tf.layers.dense(states[0], num_labels)
+        logits = tf.layers.dense(h_state, num_labels)
 
 
         self.loss = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.labels, logits=logits), name='loss')

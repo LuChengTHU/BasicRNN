@@ -9,6 +9,7 @@ def bias_variable(shape):  # you can use this func to build new variables
     initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial)
 
+
 class BasicRNNCell(tf.contrib.rnn.RNNCell):
 
     def __init__(self, num_units, activation=tf.tanh, reuse=None):

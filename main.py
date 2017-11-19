@@ -22,6 +22,8 @@ tf.app.flags.DEFINE_string("data_dir", "./data", "Data directory")
 tf.app.flags.DEFINE_string("train_dir", "./train/LSTM", "Training directory.")
 tf.app.flags.DEFINE_boolean("log_parameters", True, "Set to True to show the parameters")
 
+tf.app.flags.DEFINE_string("model", "LSTM", "Set the RNN model")
+
 FLAGS = tf.app.flags.FLAGS
 
 def load_data(path, fname):
@@ -32,6 +34,7 @@ def load_data(path, fname):
             tokens = line.split(' ')
             data.append({'label':tokens[0], 'text':tokens[1:]})
     return data
+
 
 def build_vocab(path, data):
     print("Creating vocabulary...")
@@ -137,7 +140,8 @@ with tf.Session(config=config) as sess:
                 FLAGS.layers,
                 FLAGS.labels,
                 embed,
-                learning_rate=0.001)
+                learning_rate=0.001,
+                model=FLAGS.model)
         if FLAGS.log_parameters:
             model.print_parameters()
         
