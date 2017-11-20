@@ -96,8 +96,9 @@ class RNN(object):
                 return
             cell_dr = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0, output_keep_prob=self.keep_prob)
             multi_cell = tf.contrib.rnn.MultiRNNCell([cell_dr] * num_layers, state_is_tuple=True)
+            init_state = multi_cell.zero_state(16, tf.float32)
             outputs, state = tf.nn.dynamic_rnn(multi_cell, self.embed_input, self.texts_length, dtype=tf.float32,
-                                               scope="rnn", time_major=False)
+                                               scope="rnn", initial_state=init_state, time_major=False)
             h_state = outputs[:, -1, :]
 
 
@@ -112,7 +113,7 @@ class RNN(object):
         self.params = tf.trainable_variables()
             
         # calculate the gradient of parameters
-            opt = tf.train.GradientDescentOptimizer(self.learning_rate)
+        opt = tf.train.GradientDescentOptimizer(self.learning_rate)
         gradients = tf.gradients(mean_loss, self.params)
         clipped_gradients, self.gradient_norm = tf.clip_by_global_norm(gradients, max_gradient_norm)
         self.update = opt.apply_gradients(zip(clipped_gradients, self.params), global_step=self.global_step)

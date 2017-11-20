@@ -143,7 +143,7 @@ with tf.Session(config=config) as sess:
                 FLAGS.layers,
                 FLAGS.labels,
                 embed,
-                learning_rate=0.001,
+                learning_rate=0.0002,
                 model=FLAGS.model)
         if FLAGS.log_parameters:
             model.print_parameters()
