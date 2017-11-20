@@ -15,7 +15,7 @@ tf.app.flags.DEFINE_integer("symbols", 18430, "vocabulary size.")
 tf.app.flags.DEFINE_integer("labels", 5, "Number of labels.")
 tf.app.flags.DEFINE_integer("epoch", 30, "Number of epoch.")
 tf.app.flags.DEFINE_integer("embed_units", 300, "Size of word embedding.")
-tf.app.flags.DEFINE_integer("units", 512, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("units", 64, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("layers", 1, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("batch_size", 16, "Batch size to use during training.")
 tf.app.flags.DEFINE_string("data_dir", "./data", "Data directory")
@@ -143,7 +143,7 @@ with tf.Session(config=config) as sess:
                 FLAGS.layers,
                 FLAGS.labels,
                 embed,
-                learning_rate=0.001,
+                learning_rate=0.0002,
                 model=FLAGS.model)
         if FLAGS.log_parameters:
             model.print_parameters()
