@@ -112,7 +112,7 @@ class RNN(object):
         self.params = tf.trainable_variables()
             
         # calculate the gradient of parameters
-        opt = tf.train.GradientDescentOptimizer(self.learning_rate)
+            opt = tf.train.GradientDescentOptimizer(self.learning_rate)
         gradients = tf.gradients(mean_loss, self.params)
         clipped_gradients, self.gradient_norm = tf.clip_by_global_norm(gradients, max_gradient_norm)
         self.update = opt.apply_gradients(zip(clipped_gradients, self.params), global_step=self.global_step)
